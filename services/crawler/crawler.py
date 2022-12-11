@@ -16,6 +16,10 @@ channel.queue_declare(queue='drink_urls', durable=True)
 # Parse the URL from the command line arguments
 url = sys.argv[1]
 
+# Parse the initial URL to extract the domain name
+initial_url_parts = urlparse(url)
+initial_domain = initial_url_parts.netloc
+
 # Send the URL to the "to_crawl" queue
 channel.basic_publish(exchange='', routing_key='to_crawl', body=url)
 print('Sent URL to crawl: %s' % url)
@@ -36,24 +40,24 @@ def crawl_url(ch, method, properties, body):
     for link in soup.find_all('a'):
         new_url = link.get('href')
         if new_url is not None and new_url.startswith('http'):
-            # Check if the URL has already been crawled in the last two hours
-            last_crawled = datetime.now() - timedelta(hours=2)
-            
-            # Parse the URL and remove the query parameters
+            # Parse the URL to extract the domain name
             url_parts = urlparse(new_url)
-            query_params = parse_qs(url_parts.query)
+            new_domain = url_parts.netloc
 
-            # Remove the query parameters from the URL parts
-            url_parts = url_parts._replace(query='')
+            # Check if the new URL is on the same domain as the initial URL 
+            if new_domain == initial_domain:
+                # Check if the URL has already been crawled in the last two hours
+                last_crawled = datetime.now() - timedelta(hours=2)
+                if new_url not in crawled_urls or crawled_urls[new_url] < last_crawled:
+                    # Parse the URL and remove the query parameters
+                    query_params = parse_qs(url_parts.query)
+                    url_parts = url_parts._replace(query='')
+                    new_url_without_query = urlunparse(url_parts)
 
-            # Reconstruct the URL without the query parameters
-            new_url_without_query = urlunparse(url_parts)
-
-            if new_url_without_query not in crawled_urls or crawled_urls[new_url_without_query] < last_crawled:
-                # Emit the new URL to the "to_crawl" queue
-                channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url_without_query)
-                print('Added new URL to crawl: %s' % new_url_without_query)
-                crawled_urls[new_url_without_query] = datetime.now()
+                    # Emit the new URL to the "to_crawl" queue
+                    channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url_without_query)
+                    print('Added new URL to crawl: %s' % new_url_without_query)
+                    crawled_urls[new_url_without_query] = datetime.now()
 
 # Dictionary to store the URLs that have been crawled
 crawled_urls = {}
