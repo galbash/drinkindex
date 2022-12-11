@@ -2,3 +2,5 @@ pika
 revChatGPT
 requests
 beautifulsoup4
+sqlalchemy
+psycopg2
