@@ -1,19 +1,44 @@
 import pika
+import requests
+from bs4 import BeautifulSoup
+import sys
 
-
-# connect to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost', port=5672))
+# Set up the connection to RabbitMQ
+connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
 
-# create a queue to publish messages to, if it does not already exist
+# Declare the queues
+channel.queue_declare(queue='to_crawl')
 channel.queue_declare(queue='drink_urls', durable=True)
 
-# publish a message to the queue
-channel.basic_publish(
-    exchange='',
-    routing_key='drink_urls',
-    body='Hello from the crawler!')
+# Parse the URL from the command line arguments
+url = sys.argv[1]
 
-# close the connection
-connection.close()
+# Send the URL to the "to_crawl" queue
+channel.basic_publish(exchange='', routing_key='to_crawl', body=url)
+print('Sent URL to crawl: %s' % url)
 
+# Define a callback function to process the URLs from the "to_crawl" queue
+def crawl_url(ch, method, properties, body):
+    # Get the page content
+    page = requests.get(body)
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    # Check if the page contains the required words
+    if 'ingredients' in soup.text:
+        # Emit the URL to the "crawled" queue
+        channel.basic_publish(exchange='', routing_key='drink_urls', body=body)
+        print('Found cocktail recipe: %s' % body)
+
+    # Find any additional URLs on the page
+    for link in soup.find_all('a'):
+        new_url = link.get('href')
+        if new_url is not None and new_url.startswith('http'):
+            # Emit the new URL to the "to_crawl" queue
+            channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url)
+            print('Added new URL to crawl: %s' % new_url)
+
+# Consume the URLs from the "to_crawl" queue
+channel.basic_consume(queue='to_crawl', on_message_callback=crawl_url, auto_ack=True)
+print('Waiting for URLs to crawl. To exit press CTRL+C')
+channel.start_consuming()
