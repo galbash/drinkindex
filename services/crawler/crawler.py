@@ -2,6 +2,7 @@ import pika
 import requests
 from bs4 import BeautifulSoup
 import sys
+from datetime import datetime, timedelta
 
 # Set up the connection to RabbitMQ
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
@@ -25,7 +26,9 @@ def crawl_url(ch, method, properties, body):
     soup = BeautifulSoup(page.content, 'html.parser')
 
     # Check if the page contains the required words
-    if 'ingredients' in soup.text:
+    print(body)
+    import pdb; pdb.set_trace()
+    if 'cocktail' in soup.text and 'recipe' in soup.text and 'ingredients' in soup.text:
         # Emit the URL to the "crawled" queue
         channel.basic_publish(exchange='', routing_key='drink_urls', body=body)
         print('Found cocktail recipe: %s' % body)
@@ -34,9 +37,16 @@ def crawl_url(ch, method, properties, body):
     for link in soup.find_all('a'):
         new_url = link.get('href')
         if new_url is not None and new_url.startswith('http'):
-            # Emit the new URL to the "to_crawl" queue
-            channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url)
-            print('Added new URL to crawl: %s' % new_url)
+            # Check if the URL has already been crawled in the last two hours
+            last_crawled = datetime.now() - timedelta(hours=2)
+            if new_url not in crawled_urls or crawled_urls[new_url] < last_crawled:
+                # Emit the new URL to the "to_crawl" queue
+                channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url)
+                print('Added new URL to crawl: %s' % new_url)
+                crawled_urls[new_url] = datetime.now()
+
+# Dictionary to store the URLs that have been crawled
+crawled_urls = {}
 
 # Consume the URLs from the "to_crawl" queue
 channel.basic_consume(queue='to_crawl', on_message_callback=crawl_url, auto_ack=True)
