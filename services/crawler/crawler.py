@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import sys
 from datetime import datetime, timedelta
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urlunparse
 
 # Set up the connection to RabbitMQ
 connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
@@ -38,10 +38,18 @@ def crawl_url(ch, method, properties, body):
         if new_url is not None and new_url.startswith('http'):
             # Check if the URL has already been crawled in the last two hours
             last_crawled = datetime.now() - timedelta(hours=2)
-            if new_url not in crawled_urls or crawled_urls[new_url] < last_crawled:
-                # Parse the URL and remove the query parameters
-                url_parts = urlparse(new_url)
-                new_url_without_query = url_parts.scheme + '://' + url_parts.netloc + url_parts.path
+            
+            # Parse the URL and remove the query parameters
+            url_parts = urlparse(new_url)
+            query_params = parse_qs(url_parts.query)
+
+            # Remove the query parameters from the URL parts
+            url_parts = url_parts._replace(query='')
+
+            # Reconstruct the URL without the query parameters
+            new_url_without_query = urlunparse(url_parts)
+
+            if new_url_without_query not in crawled_urls or crawled_urls[new_url_without_query] < last_crawled:
                 # Emit the new URL to the "to_crawl" queue
                 channel.basic_publish(exchange='', routing_key='to_crawl', body=new_url_without_query)
                 print('Added new URL to crawl: %s' % new_url_without_query)
