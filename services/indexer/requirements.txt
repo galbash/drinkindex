@@ -1,1 +1,4 @@
 pika
+revChatGPT
+requests
+beautifulsoup4
