@@ -23,7 +23,7 @@ class Ingredient(Base):
     amount = Column(String, nullable=False)
 
 # Connect to the database
-engine = create_engine('postgresql://postgres:password@localhost:5432/postgres')
+engine = create_engine('postgresql://localhost:5432/postgres')
 
 # Create the tables if they don't already exist
 Base.metadata.create_all(engine)
