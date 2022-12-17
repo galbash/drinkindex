@@ -3,21 +3,15 @@ import Ingredients from './Ingredients';
 import Cocktails from './Cocktails';
 
 export default function DrinkIndex() {
+  // Restore the saved selected ingredients when the component is first rendered
+  const savedIngredients = JSON.parse(localStorage.getItem('selectedIngredients'));
+  const [selectedIngredients, setSelectedIngredients] = useState(savedIngredients || []);
   const [showResults, setShowResults] = useState(false);
-  const [selectedIngredients, setSelectedIngredients] = useState([]);
 
   // Save the selected ingredients to local storage when they change
   useEffect(() => {
     localStorage.setItem('selectedIngredients', JSON.stringify(selectedIngredients));
   }, [selectedIngredients]);
-
-  // Restore the saved selected ingredients when the component is first rendered
-  useEffect(() => {
-    const savedIngredients = JSON.parse(localStorage.getItem('selectedIngredients'));
-    if (savedIngredients) {
-      setSelectedIngredients(savedIngredients);
-    }
-  }, []);
 
   const handleSearch = () => {
     setShowResults(true);
@@ -44,3 +38,4 @@ export default function DrinkIndex() {
     </div>
   );
 }
+
