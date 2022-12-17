@@ -26,6 +26,7 @@ print('Sent URL to crawl: %s' % url)
 
 # Define a callback function to process the URLs from the "to_crawl" queue
 def crawl_url(ch, method, properties, body):
+    import time; time.sleep(2)
     # Get the page content
     page = requests.get(body)
     soup = BeautifulSoup(page.content, 'html.parser')

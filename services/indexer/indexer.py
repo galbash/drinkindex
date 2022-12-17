@@ -12,8 +12,8 @@ config = {
     #"email": sys.argv[1],
     #"password": sys.argv[2],
     "session_token": sys.argv[1],
-    "cf_clearance": sys.argv[2],
-    "user_agent": sys.argv[3]
+    #"cf_clearance": sys.argv[2],
+    #"user_agent": sys.argv[3]
 }
 
 chatbot = Chatbot(config, conversation_id=None)
@@ -31,7 +31,7 @@ QUESTION = """From the following text below, please understand if it is an artic
 def process_message(ch, method, properties, body):
     time.sleep(5)
     try:
-        print(body)
+        print(body.decode('utf-8'))
         page = requests.get(body)
         soup = BeautifulSoup(page.content, "html.parser")
         
@@ -53,7 +53,7 @@ def process_message(ch, method, properties, body):
         ingredients = [(ingredient.strip(), amount.strip()) for ingredient, amount in ingredients]
 
         # Insert the cocktail into the cocktail_recipes table
-        cocktail = CocktailRecipe(name=name, url=body, rank=rank)
+        cocktail = CocktailRecipe(name=name, url=body.decode('utf-8'), rank=rank)
         session.add(cocktail)
         session.commit()
         
