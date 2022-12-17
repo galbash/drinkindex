@@ -1,0 +1,52 @@
+/* index.css */
+
+/* Use a bright and bold color scheme */
+:root {
+  --primary-color: #00b8d4;
+  --secondary-color: #0091ea;
+  --tertiary-color: #2962ff;
+  --quaternary-color: #6200ea;
+  --quinary-color: #b388ff;
+}
+
+/* Style the body with a gradient background */
+body {
+  background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
+  color: white;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Style the list with a futuristic font and color scheme */
+ul {
+  list-style: none; /* Remove the default bullet points */
+  font-family: 'Roboto Mono', monospace; /* Use a futuristic font */
+  font-size: 1.2em;
+  margin: 0; /* Remove the default margin */
+  padding: 0; /* Remove the default padding */
+}
+
+li {
+  display: flex; /* Display the list items as flexbox elements */
+  align-items: center; /* Align the content to the center */
+  margin: 0.5em 0; /* Add some vertical spacing between list items */
+  padding: 0 0.5em; /* Add some horizontal spacing between the content and the edges of the list item */
+  background: var(--quaternary-color); /* Use a bold and vibrant background color */
+  border-radius: 5px; /* Round the corners */
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23); /* Add a subtle box shadow */
+  color: white; /* Use a white text color */
+}
+
+/* Style the list item text with a colorful gradient */
+li span {
+  background: linear-gradient(to right, var(--quinary-color), var(--tertiary-color)); /* Use a gradient background */
+  -webkit-background-clip: text; /* Clip the text to the gradient */
+  -webkit-text-fill-color: transparent; /* Make the text transparent */
+}
+
+/* Style the list item icons with a colorful gradient */
+li i {
+  background: linear-gradient(to right, var(--quinary-color), var(--tertiary-color)); /* Use a gradient background */
+  -webkit-background-clip: text; /* Clip the icon to the gradient */
+  -webkit-text-fill-color: transparent; /* Make the icon transparent */
+  margin-right: 0.5em; /* Add some horizontal spacing between the icon and the text */
+}
